@@ -8,12 +8,25 @@ from django.db.models import Q
 from django.contrib import messages
 from django.http import HttpResponseRedirect
 from django.db.models import Case, When
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 import pandas as pd
 
 # Create your views here.
 
 def index(request):
-    movies = Movie.objects.all()
+    movies_list = Movie.objects.all()
+    paginator = Paginator(movies_list, 8)  # Show 8 movies per page
+
+    page = request.GET.get('page')
+    try:
+        movies = paginator.page(page)
+    except PageNotAnInteger:
+        # If page is not an integer, deliver first page.
+        movies = paginator.page(1)
+    except EmptyPage:
+        # If page is out of range (e.g. 9999), deliver last page of results.
+        movies = paginator.page(paginator.num_pages)
+
     query = request.GET.get('q')
 
     if query:
@@ -22,7 +35,8 @@ def index(request):
 
     return render(request, 'recommend/list.html', {'movies': movies})
 
-
+def about(request):
+    return render(request,'recommend/about.html');
 # Show details of the movie
 def detail(request, movie_id):
     if not request.user.is_authenticated:
@@ -86,21 +100,32 @@ def detail(request, movie_id):
 
 # MyList functionality
 def watch(request):
-
     if not request.user.is_authenticated:
         return redirect("login")
     if not request.user.is_active:
         raise Http404
 
-    movies = Movie.objects.filter(mylist__watch=True,mylist__user=request.user)
+    movies_list = Movie.objects.filter(mylist__watch=True, mylist__user=request.user)
     query = request.GET.get('q')
 
     if query:
-        movies = Movie.objects.filter(Q(title__icontains=query)).distinct()
-        return render(request, 'recommend/watch.html', {'movies': movies})
+        movies_list = Movie.objects.filter(Q(title__icontains=query)).distinct()
+
+    # Number of movies per page
+    movies_per_page = 8
+    paginator = Paginator(movies_list, movies_per_page)
+
+    page = request.GET.get('page')
+    try:
+        movies = paginator.page(page)
+    except PageNotAnInteger:
+        # If page is not an integer, deliver first page.
+        movies = paginator.page(1)
+    except EmptyPage:
+        # If page is out of range (e.g., 9999), deliver last page of results.
+        movies = paginator.page(paginator.num_pages)
 
     return render(request, 'recommend/watch.html', {'movies': movies})
-
 
 # To get similar movies based on user rating
 def get_similar(movie_name,rating,corrMatrix):

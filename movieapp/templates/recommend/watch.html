@@ -1,13 +1,13 @@
 {% extends 'recommend/base.html' %}
 {% block body %}
 
-<div class="container mt-5">
+<div class="container mt-5 text-white">
     <h2 class="mb-4 text-white">My List</h2>
     <hr>
 
-    <!-- Movie list -->
-    <div class="row">
-        {% if movies %}
+    {% if movies %}
+        <!-- Movie list -->
+        <div class="row">
             {% for movie in movies %}
                 <div class="col-md-3 mb-4">
                     <div class="card">
@@ -20,12 +20,33 @@
                     </div>
                 </div>
             {% endfor %}
-        {% else %}
-            <div class="alert alert-danger">
-                <strong>Sorry!</strong> No movies in your list.
-            </div>
-        {% endif %}
-    </div>
+        </div>
+
+        <!-- Pagination links -->
+        <div class="mt-4">
+            <span class="step-links">
+                {% if movies.has_previous %}
+                    <a href="?page=1">&laquo; first</a>
+                    <a href="?page={{ movies.previous_page_number }}">previous</a>
+                {% endif %}
+
+                <span class="current">
+                    Page {{ movies.number }} of {{ movies.paginator.num_pages }}.
+                </span>
+
+                {% if movies.has_next %}
+                    <a href="?page={{ movies.next_page_number }}">next</a>
+                    <a href="?page={{ movies.paginator.num_pages }}">last &raquo;</a>
+                {% endif %}
+            </span>
+        </div>
+    {% else %}
+        <!-- No movies message -->
+        <div class="alert alert-danger mt-4">
+            <strong>Sorry!</strong> No movies in your list.
+        </div>
+    {% endif %}
+
 </div>
 
 <style>
